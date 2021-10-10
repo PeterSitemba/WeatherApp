@@ -24,14 +24,16 @@ import faba.app.weatherapp.utils.Constants.TXT_RAINY
 import faba.app.weatherapp.utils.Constants.TXT_SUNNY
 import faba.app.weatherapp.ui.theme.WeatherAppTheme
 import faba.app.weatherapp.utils.Constants.DEGREE
+import kotlin.math.roundToInt
 
 @Composable
-fun WeatherScreen(condition: String, currentWeatherDataList: List<CurrentWeatherData>) {
+fun WeatherScreen(currentWeatherDataList: List<CurrentWeatherData>) {
 
     var currentCondition = painterResource(R.drawable.sea_sunny)
     var currentBg = colorResource(R.color.bg_sea_day)
     var currentTxt = "SUNNY"
     lateinit var temp: String
+    lateinit var condition: String
 
 
     val sunny = painterResource(R.drawable.sea_sunny)
@@ -43,26 +45,30 @@ fun WeatherScreen(condition: String, currentWeatherDataList: List<CurrentWeather
 
     if (currentWeatherDataList.isNotEmpty()) {
         val mainObj = currentWeatherDataList[0].weatherData.main
-        temp = (Math.round(mainObj.temp - 273.15)).toString()
+        temp = ((mainObj.temp - 273.15).roundToInt()).toString()
+
+        val weatherArray = currentWeatherDataList[0].weatherData.weather
+        condition = weatherArray[0].main
 
     } else {
         temp = "0"
+        condition = "Clear"
     }
 
 
 
     when (condition) {
-        "sunny" -> {
+        "Clear" -> {
             currentCondition = sunny
             currentBg = bgSunny
             currentTxt = TXT_SUNNY
         }
-        "cloudy" -> {
+        "Clouds" -> {
             currentCondition = cloudy
             currentBg = bgCloudy
             currentTxt = TXT_CLOUDY
         }
-        "rainy" -> {
+        "Rain" -> {
             currentCondition = rainy
             currentBg = bgRainy
             currentTxt = TXT_RAINY
@@ -134,12 +140,9 @@ fun CurrentWeatherData(currentWeatherDataList: List<CurrentWeatherData>) {
 
     if (currentWeatherDataList.isNotEmpty()) {
         val mainObj = currentWeatherDataList[0].weatherData.main
-
-
-
-        temp = (Math.round(mainObj.temp - 273.15)).toString()
-        tempMin = (Math.round(mainObj.temp_min - 273.15)).toString()
-        tempMax = (Math.round(mainObj.temp_max - 273.15)).toString()
+        temp = ((mainObj.temp - 273.15).roundToInt()).toString()
+        tempMin = ((mainObj.temp_min - 273.15).roundToInt()).toString()
+        tempMax = ((mainObj.temp_max - 273.15).roundToInt()).toString()
     } else {
         temp = "0"
         tempMin = "0"

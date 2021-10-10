@@ -65,7 +65,7 @@ fun WeatherActivityScreen(weatherViewModel: WeatherViewModel) {
     val weatherItems: List<CurrentWeatherData> by weatherViewModel.roomCurrentWeatherData()
         .observeAsState(listOf())
 
-    WeatherScreen("sunny", weatherItems)
+    WeatherScreen(weatherItems)
 
 
 }
