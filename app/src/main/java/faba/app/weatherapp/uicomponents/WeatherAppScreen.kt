@@ -1,4 +1,4 @@
-package faba.app.weatherapp
+package faba.app.weatherapp.uicomponents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,17 +17,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import faba.app.weatherapp.R
+import faba.app.weatherapp.db.CurrentWeatherData
 import faba.app.weatherapp.utils.Constants.TXT_CLOUDY
 import faba.app.weatherapp.utils.Constants.TXT_RAINY
 import faba.app.weatherapp.utils.Constants.TXT_SUNNY
 import faba.app.weatherapp.ui.theme.WeatherAppTheme
+import faba.app.weatherapp.utils.Constants.DEGREE
 
 @Composable
-fun WeatherScreen(condition: String) {
+fun WeatherScreen(condition: String, currentWeatherDataList: List<CurrentWeatherData>) {
 
     var currentCondition = painterResource(R.drawable.sea_sunny)
     var currentBg = colorResource(R.color.bg_sea_day)
     var currentTxt = "SUNNY"
+    lateinit var temp: String
+
 
     val sunny = painterResource(R.drawable.sea_sunny)
     val cloudy = painterResource(R.drawable.sea_cloudy)
@@ -35,6 +40,15 @@ fun WeatherScreen(condition: String) {
     val bgSunny = colorResource(R.color.bg_sea_day)
     val bgCloudy = colorResource(R.color.bg_sea_day_cloudy)
     val bgRainy = colorResource(R.color.bg_sea_day_rainy)
+
+    if (currentWeatherDataList.isNotEmpty()) {
+        val mainObj = currentWeatherDataList[0].weatherData.main
+        temp = (Math.round(mainObj.temp - 273.15)).toString()
+
+    } else {
+        temp = "0"
+    }
+
 
 
     when (condition) {
@@ -76,7 +90,7 @@ fun WeatherScreen(condition: String) {
                     .padding(bottom = 70.dp)
             ) {
                 Text(
-                    text = "25",
+                    text = "$temp$DEGREE",
                     textAlign = TextAlign.Center,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
@@ -103,7 +117,7 @@ fun WeatherScreen(condition: String) {
                 .background(color = currentBg)
         ) {
 
-            currentWeatherData()
+            CurrentWeatherData(currentWeatherDataList)
 
         }
 
@@ -112,7 +126,28 @@ fun WeatherScreen(condition: String) {
 }
 
 @Composable
-fun currentWeatherData() {
+fun CurrentWeatherData(currentWeatherDataList: List<CurrentWeatherData>) {
+
+    lateinit var temp: String
+    lateinit var tempMin: String
+    lateinit var tempMax: String
+
+    if (currentWeatherDataList.isNotEmpty()) {
+        val mainObj = currentWeatherDataList[0].weatherData.main
+
+
+
+        temp = (Math.round(mainObj.temp - 273.15)).toString()
+        tempMin = (Math.round(mainObj.temp_min - 273.15)).toString()
+        tempMax = (Math.round(mainObj.temp_max - 273.15)).toString()
+    } else {
+        temp = "0"
+        tempMin = "0"
+        tempMax = "0"
+    }
+
+
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
@@ -125,10 +160,10 @@ fun currentWeatherData() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "19",
+                text = "$tempMin$DEGREE",
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
 
                 )
 
@@ -142,11 +177,11 @@ fun currentWeatherData() {
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "25",
+                text = "$temp$DEGREE",
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
             )
 
             Text(
@@ -163,10 +198,10 @@ fun currentWeatherData() {
         ) {
 
             Text(
-                text = "27",
+                text = "$tempMax$DEGREE",
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
             )
 
             Text(
@@ -192,7 +227,7 @@ fun currentWeatherData() {
 @Composable
 fun WeatherScreenPreview() {
     WeatherAppTheme {
-        WeatherScreen("sunny")
+        //WeatherScreen("sunny")
     }
 
 }

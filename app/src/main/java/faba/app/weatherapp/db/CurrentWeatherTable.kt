@@ -9,5 +9,5 @@ import faba.app.weatherapp.model.WeatherData
 @Entity(tableName = "current_weather_table")
 data class CurrentWeatherData(
     @PrimaryKey val id: Int,
-    @ColumnInfo(name = "weatherData") @TypeConverters(Converter::class) val weatherData: WeatherData
+    @ColumnInfo(name = "weather_data") @TypeConverters(Converter::class) val weatherData: WeatherData
 )

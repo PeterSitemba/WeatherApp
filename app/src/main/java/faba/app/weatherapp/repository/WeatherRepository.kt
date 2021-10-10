@@ -1,6 +1,7 @@
 package faba.app.weatherapp.repository
 
 import androidx.annotation.WorkerThread
+import androidx.lifecycle.LiveData
 import faba.app.weatherapp.db.CurrentWeatherData
 import faba.app.weatherapp.db.WeatherDao
 import faba.app.weatherapp.service.RetrofitService
@@ -29,4 +30,6 @@ class WeatherRepository @Inject constructor(
     suspend fun insert(currentWeatherData: CurrentWeatherData) {
         weatherDao.insertCurrentWeather(currentWeatherData)
     }
+
+    val getRowCount : Flow<Int?>? = weatherDao.getRowCount()
 }

@@ -14,8 +14,8 @@ import kotlinx.coroutines.*
 class WeatherViewModel @Inject constructor(private val weatherRepository: WeatherRepository) :
     ViewModel() {
 
-    val errorMessage = MutableLiveData<String>()
-    val loading = MutableLiveData<Boolean>()
+    private val errorMessage = MutableLiveData<String>()
+    private val loading = MutableLiveData<Boolean>()
     val weatherForecastResponse = MutableLiveData<WeatherData>()
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -52,6 +52,7 @@ class WeatherViewModel @Inject constructor(private val weatherRepository: Weathe
         return weatherRepository.roomCurrentWeatherList.asLiveData()
     }
 
+    fun getRowCount(): LiveData<Int?>? = weatherRepository.getRowCount?.asLiveData()
 
     private fun onError(message: String) {
         errorMessage.postValue(message)
