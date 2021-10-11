@@ -22,7 +22,6 @@ interface RetrofitService {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("appid") appId: String,
-        @Query("cnt") cnt: Int,
         @Query("units") units: String,
     ): Response<ForecastData>
 

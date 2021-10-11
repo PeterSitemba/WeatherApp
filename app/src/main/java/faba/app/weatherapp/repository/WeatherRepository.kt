@@ -32,13 +32,11 @@ class WeatherRepository @Inject constructor(
     suspend fun getWeatherForecast(
         lat: Double,
         lon: Double,
-        appId: String,
-        cnt: Int
+        appId: String
     ) = retrofitService.getWeatherForecast(
         lat,
         lon,
         appId,
-        cnt,
         units = "metric"
     )
 

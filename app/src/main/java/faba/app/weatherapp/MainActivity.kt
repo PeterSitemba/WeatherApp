@@ -46,8 +46,8 @@ class MainActivity : ComponentActivity() {
 
     private fun initCurrentWeather() {
         weatherViewModel.getCurrentWeather(
-            -1.286322,
-            36.78309,
+            34.985003,
+            -120.511564,
             "2a5ac244383461b7c2225b066ef65029"
         )
 
@@ -68,8 +68,8 @@ class MainActivity : ComponentActivity() {
 
     private fun initWeatherForecast() {
         weatherViewModel.getWeatherForecast(
-            -1.286322,
-            36.78309,
+            34.985003,
+            -120.511564,
             "2a5ac244383461b7c2225b066ef65029"
         )
 

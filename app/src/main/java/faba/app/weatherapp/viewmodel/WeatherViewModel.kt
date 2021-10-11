@@ -62,7 +62,7 @@ class WeatherViewModel @Inject constructor(private val weatherRepository: Weathe
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO + exceptionHandler) {
-                    val response = weatherRepository.getWeatherForecast(lat, lon, appId,cnt = 5)
+                    val response = weatherRepository.getWeatherForecast(lat, lon, appId)
                     withContext(Dispatchers.Main) {
                         if (response.isSuccessful) {
                             weatherForecastResponse.postValue(response.body())

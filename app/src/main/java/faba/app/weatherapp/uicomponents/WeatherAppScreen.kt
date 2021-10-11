@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -32,6 +30,9 @@ import kotlin.math.roundToInt
 import androidx.constraintlayout.compose.ConstraintLayout
 import faba.app.weatherapp.db.ForecastWeatherData
 import faba.app.weatherapp.models.forecast.ForecastDays
+import faba.app.weatherapp.utils.DateUtil
+import java.text.DateFormat
+
 
 
 @Composable
@@ -246,9 +247,10 @@ fun ForeCastWeatherData(weatherForecastList: List<ForecastWeatherData>) {
         forecastList = weatherForecastList[0].forecastData.list.toMutableList()
     }
 
-    LazyColumn() {
+    LazyColumn(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxHeight().padding(bottom = 20.dp)) {
         items(forecastList) { forecastItem ->
-            ForeCastWeatherDataItem(forecastItem)
+            if (forecastItem.dt_txt.contains("12:00:00"))
+                ForeCastWeatherDataItem(forecastItem)
         }
     }
 
@@ -269,7 +271,8 @@ fun ForeCastWeatherDataItem(forecastDays: ForecastDays) {
     val mainObj = forecastDays.main
     val currentTemp = mainObj.temp.roundToInt().toString()
 
-    val dayOfWeek = forecastDays.dt_txt
+    val dayOfWeek = DateUtil.getDay(forecastDays.dt_txt)
+
 
     when (condition) {
         "Clear" -> {
