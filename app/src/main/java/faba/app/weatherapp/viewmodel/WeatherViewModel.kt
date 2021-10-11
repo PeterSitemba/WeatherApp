@@ -3,45 +3,85 @@ package faba.app.weatherapp.viewmodel
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import faba.app.weatherapp.db.CurrentWeatherData
-import faba.app.weatherapp.model.WeatherData
+import faba.app.weatherapp.db.ForecastWeatherData
+import faba.app.weatherapp.models.current.WeatherData
+import faba.app.weatherapp.models.forecast.ForecastData
 import faba.app.weatherapp.repository.WeatherRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlinx.coroutines.*
+import java.lang.Exception
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(private val weatherRepository: WeatherRepository) :
     ViewModel() {
 
-    private val errorMessage = MutableLiveData<String>()
-    private val loading = MutableLiveData<Boolean>()
-    val weatherForecastResponse = MutableLiveData<WeatherData>()
+    val errorMessage = MutableLiveData<String>()
+    val loading = MutableLiveData<Boolean>()
+    val currentWeatherResponse = MutableLiveData<WeatherData>()
+    val weatherForecastResponse = MutableLiveData<ForecastData>()
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         onError("Exception handled: ${throwable.localizedMessage}")
 
     }
 
-    fun getCurrentWeatherForecast(
+    //current
+    fun getCurrentWeather(
         lat: Double,
         lon: Double,
         appId: String
     ) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO + exceptionHandler) {
-                val response = weatherRepository.getCurrentWeatherForecast(lat, lon, appId)
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful) {
-                        weatherForecastResponse.postValue(response.body())
-                        loading.value = false
-                    } else {
-                        onError("Error : ${response.message()}")
+            try {
+                withContext(Dispatchers.IO + exceptionHandler) {
+                    val response = weatherRepository.getCurrentWeather(lat, lon, appId)
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            currentWeatherResponse.postValue(response.body())
+                            loading.value = false
+                        } else {
+                            onError("Error : ${response.message()}")
+                        }
                     }
                 }
+
+            } catch (e: Exception) {
+                onError(e.message!!)
             }
         }
     }
+
+    //forecast
+    fun getWeatherForecast(
+        lat: Double,
+        lon: Double,
+        appId: String
+    ) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO + exceptionHandler) {
+                    val response = weatherRepository.getWeatherForecast(lat, lon, appId,cnt = 3)
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            weatherForecastResponse.postValue(response.body())
+                            loading.value = false
+                        } else {
+                            onError("Error : ${response.message()}")
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                onError(e.message!!)
+            }
+        }
+    }
+
+
+
+    //current
 
     fun insertCurrentWeatherData(currentWeatherData: CurrentWeatherData) = viewModelScope.launch {
         weatherRepository.insert(currentWeatherData)
@@ -54,6 +94,20 @@ class WeatherViewModel @Inject constructor(private val weatherRepository: Weathe
 
     fun getRowCount(): LiveData<Int?>? = weatherRepository.getRowCount?.asLiveData()
 
+
+    //forecast
+    fun insertForecast(forecastWeatherData: ForecastWeatherData) = viewModelScope.launch {
+        weatherRepository.insertForecast(forecastWeatherData)
+    }
+
+    fun roomWeatherForecastData(): LiveData<List<ForecastWeatherData>> {
+        return weatherRepository.roomWeatherForecastList.asLiveData()
+    }
+
+    fun getForecastRowCount(): LiveData<Int?>? = weatherRepository.getForecastRowCount?.asLiveData()
+
+
+    //Error
     private fun onError(message: String) {
         errorMessage.postValue(message)
         loading.postValue(false)

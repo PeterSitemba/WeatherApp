@@ -1,4 +1,4 @@
-package faba.app.weatherapp.model
+package faba.app.weatherapp.models.current
 
 data class Main(
     val feels_like: Double,

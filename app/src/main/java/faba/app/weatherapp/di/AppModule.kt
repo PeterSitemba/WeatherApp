@@ -11,6 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import faba.app.weatherapp.db.WeatherDao
 import faba.app.weatherapp.db.WeatherRoomDatabase
+import faba.app.weatherapp.network.NetworkConnectionInterceptor
 import faba.app.weatherapp.repository.WeatherRepository
 import faba.app.weatherapp.service.RetrofitService
 import okhttp3.OkHttpClient
@@ -28,14 +29,14 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideRetrofit(gson: Gson): Retrofit = Retrofit.Builder()
+    fun provideRetrofit(gson: Gson, @ApplicationContext appContext: Context): Retrofit = Retrofit.Builder()
         .baseUrl("https://api.openweathermap.org/data/2.5/weather/")
         .addConverterFactory(GsonConverterFactory.create(gson))
-        .client(getOkhttpClient()!!)
+        .client(getOkhttpClient(appContext)!!)
         .build()
 
     @Provides
-    fun getOkhttpClient(): OkHttpClient? {
+    fun getOkhttpClient(@ApplicationContext appContext: Context): OkHttpClient? {
         httpClient?.let {
             return it
         } ?: kotlin.run {
@@ -43,6 +44,7 @@ object AppModule {
                 .connectTimeout(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
                 .callTimeout(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
                 .readTimeout(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .addInterceptor(NetworkConnectionInterceptor(appContext))
                 .build()
 
         }

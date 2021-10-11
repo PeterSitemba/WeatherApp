@@ -1,4 +1,4 @@
-package faba.app.weatherapp.model
+package faba.app.weatherapp.models.current
 
 data class Weather(
     val description: String,

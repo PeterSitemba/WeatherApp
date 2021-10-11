@@ -3,10 +3,14 @@ package faba.app.weatherapp.uicomponents
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -25,9 +29,16 @@ import faba.app.weatherapp.utils.Constants.TXT_SUNNY
 import faba.app.weatherapp.ui.theme.WeatherAppTheme
 import faba.app.weatherapp.utils.Constants.DEGREE
 import kotlin.math.roundToInt
+import androidx.constraintlayout.compose.ConstraintLayout
+import faba.app.weatherapp.db.ForecastWeatherData
+import faba.app.weatherapp.models.forecast.ForecastDays
+
 
 @Composable
-fun WeatherScreen(currentWeatherDataList: List<CurrentWeatherData>) {
+fun WeatherScreen(
+    currentWeatherDataList: List<CurrentWeatherData>,
+    weatherForecastList: List<ForecastWeatherData>
+) {
 
     var currentCondition = painterResource(R.drawable.sea_sunny)
     var currentBg = colorResource(R.color.bg_sea_day)
@@ -45,7 +56,7 @@ fun WeatherScreen(currentWeatherDataList: List<CurrentWeatherData>) {
 
     if (currentWeatherDataList.isNotEmpty()) {
         val mainObj = currentWeatherDataList[0].weatherData.main
-        temp = ((mainObj.temp - 273.15).roundToInt()).toString()
+        temp = mainObj.temp.roundToInt().toString()
 
         val weatherArray = currentWeatherDataList[0].weatherData.weather
         condition = weatherArray[0].main
@@ -124,6 +135,7 @@ fun WeatherScreen(currentWeatherDataList: List<CurrentWeatherData>) {
         ) {
 
             CurrentWeatherData(currentWeatherDataList)
+            ForeCastWeatherData(weatherForecastList)
 
         }
 
@@ -140,9 +152,9 @@ fun CurrentWeatherData(currentWeatherDataList: List<CurrentWeatherData>) {
 
     if (currentWeatherDataList.isNotEmpty()) {
         val mainObj = currentWeatherDataList[0].weatherData.main
-        temp = ((mainObj.temp - 273.15).roundToInt()).toString()
-        tempMin = ((mainObj.temp_min - 273.15).roundToInt()).toString()
-        tempMax = ((mainObj.temp_max - 273.15).roundToInt()).toString()
+        temp = mainObj.temp.roundToInt().toString()
+        tempMin = mainObj.temp_min.roundToInt().toString()
+        tempMax = mainObj.temp_max.roundToInt().toString()
     } else {
         temp = "0"
         tempMin = "0"
@@ -226,11 +238,100 @@ fun CurrentWeatherData(currentWeatherDataList: List<CurrentWeatherData>) {
 
 }
 
+@Composable
+fun ForeCastWeatherData(weatherForecastList: List<ForecastWeatherData>) {
+
+    var forecastList: MutableList<ForecastDays> = mutableListOf()
+    if (weatherForecastList.isNotEmpty()) {
+        forecastList = weatherForecastList[0].forecastData.list.toMutableList()
+    }
+
+    LazyColumn() {
+        items(forecastList) { forecastItem ->
+            ForeCastWeatherDataItem(forecastItem)
+        }
+    }
+
+}
+
+
+@Composable
+fun ForeCastWeatherDataItem(forecastDays: ForecastDays) {
+
+    val sunny = painterResource(R.drawable.clear)
+    val cloudy = painterResource(R.drawable.partlysunny)
+    val rainy = painterResource(R.drawable.rain)
+    var currentCondition = painterResource(R.drawable.sea_sunny)
+
+    val weatherArray = forecastDays.weather
+    val condition = weatherArray[0].main
+
+    val mainObj = forecastDays.main
+    val currentTemp = mainObj.temp.roundToInt().toString()
+
+    val dayOfWeek = forecastDays.dt_txt
+
+    when (condition) {
+        "Clear" -> {
+            currentCondition = sunny
+        }
+        "Clouds" -> {
+            currentCondition = cloudy
+        }
+        "Rain" -> {
+            currentCondition = rainy
+        }
+    }
+
+
+    ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
+
+        val (icon, day, temp) = createRefs()
+
+        Text(
+            text = dayOfWeek,
+            color = Color.White,
+            fontSize = 22.sp,
+            modifier = Modifier
+                .constrainAs(day) {
+                    start.linkTo(parent.start)
+                }
+                .padding(start = 20.dp)
+        )
+
+        Image(
+            painter = currentCondition,
+            contentDescription = "clear",
+            modifier = Modifier
+                .size(width = 27.dp, height = 27.dp)
+                .padding(start = 5.dp, top = 5.dp)
+                .constrainAs(icon) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+        )
+
+        Text(
+            text = "$currentTemp$DEGREE",
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 22.sp,
+            modifier = Modifier
+                .constrainAs(temp) {
+                    end.linkTo(parent.end)
+                }
+                .padding(end = 20.dp)
+        )
+
+
+    }
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun WeatherScreenPreview() {
     WeatherAppTheme {
-        //WeatherScreen("sunny")
+        //WeatherScreen(listOf())
     }
 
 }

@@ -1,4 +1,4 @@
-package faba.app.weatherapp.model
+package faba.app.weatherapp.models.current
 
 data class Sys(
     val country: String,
