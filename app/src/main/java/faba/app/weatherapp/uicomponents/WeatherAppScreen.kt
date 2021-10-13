@@ -5,9 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,11 +29,10 @@ import faba.app.weatherapp.ui.theme.WeatherAppTheme
 import faba.app.weatherapp.utils.Constants.DEGREE
 import kotlin.math.roundToInt
 import androidx.constraintlayout.compose.ConstraintLayout
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import faba.app.weatherapp.db.ForecastWeatherData
 import faba.app.weatherapp.models.forecast.ForecastDays
 import faba.app.weatherapp.utils.DateUtil
-import java.text.DateFormat
-
 
 
 @Composable
@@ -41,12 +41,17 @@ fun WeatherScreen(
     weatherForecastList: List<ForecastWeatherData>
 ) {
 
+    val systemUiController = rememberSystemUiController()
+
+
+    CircularProgressIndicator()
+
     var currentCondition = painterResource(R.drawable.sea_sunny)
     var currentBg = colorResource(R.color.bg_sea_day)
-    var currentTxt = "SUNNY"
+    var currentTxt = "CLOUDY"
     lateinit var temp: String
-    lateinit var condition: String
-
+    var condition = ""
+    lateinit var city: String
 
     val sunny = painterResource(R.drawable.sea_sunny)
     val cloudy = painterResource(R.drawable.sea_cloudy)
@@ -54,16 +59,20 @@ fun WeatherScreen(
     val bgSunny = colorResource(R.color.bg_sea_day)
     val bgCloudy = colorResource(R.color.bg_sea_day_cloudy)
     val bgRainy = colorResource(R.color.bg_sea_day_rainy)
+    val bgSunnyStatusBar = colorResource(R.color.header)
 
     if (currentWeatherDataList.isNotEmpty()) {
-        val mainObj = currentWeatherDataList[0].weatherData.main
+        val weatherData = currentWeatherDataList[0].weatherData
+        val mainObj = weatherData.main
         temp = mainObj.temp.roundToInt().toString()
 
-        val weatherArray = currentWeatherDataList[0].weatherData.weather
+        val weatherArray = weatherData.weather
         condition = weatherArray[0].main
+        city = weatherData.name
 
     } else {
         temp = "0"
+        city = ""
         condition = "Clear"
     }
 
@@ -87,6 +96,18 @@ fun WeatherScreen(
         }
     }
 
+    SideEffect {
+
+        if (condition == "Clear") {
+            currentBg = bgSunnyStatusBar
+        }
+
+        systemUiController.setStatusBarColor(
+            color = currentBg
+        )
+    }
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -105,8 +126,17 @@ fun WeatherScreen(
             Column(
                 modifier = Modifier
                     .align(alignment = Alignment.Center)
-                    .padding(bottom = 70.dp)
+                    .padding(bottom = 95.dp)
             ) {
+                Text(
+                    text = city,
+                    textAlign = TextAlign.Center,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 25.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Text(
                     text = "$temp$DEGREE",
                     textAlign = TextAlign.Center,
@@ -247,7 +277,11 @@ fun ForeCastWeatherData(weatherForecastList: List<ForecastWeatherData>) {
         forecastList = weatherForecastList[0].forecastData.list.toMutableList()
     }
 
-    LazyColumn(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxHeight().padding(bottom = 20.dp)) {
+    LazyColumn(
+        verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
+            .fillMaxHeight()
+            .padding(bottom = 20.dp)
+    ) {
         items(forecastList) { forecastItem ->
             if (forecastItem.dt_txt.contains("12:00:00"))
                 ForeCastWeatherDataItem(forecastItem)

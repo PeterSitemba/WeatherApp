@@ -35,6 +35,7 @@ class WeatherViewModel @Inject constructor(private val weatherRepository: Weathe
     ) {
         viewModelScope.launch {
             try {
+                loading.value = true
                 withContext(Dispatchers.IO + exceptionHandler) {
                     val response = weatherRepository.getCurrentWeather(lat, lon, appId)
                     withContext(Dispatchers.Main) {
@@ -61,6 +62,7 @@ class WeatherViewModel @Inject constructor(private val weatherRepository: Weathe
     ) {
         viewModelScope.launch {
             try {
+                loading.value = true
                 withContext(Dispatchers.IO + exceptionHandler) {
                     val response = weatherRepository.getWeatherForecast(lat, lon, appId)
                     withContext(Dispatchers.Main) {
