@@ -368,7 +368,7 @@ fun ForeCastWeatherDataItem(forecastDays: ForecastDays) {
 @Composable
 fun WeatherScreenPreview() {
     WeatherAppTheme {
-        //WeatherScreen(listOf())
+        WeatherScreen(listOf(), listOf())
     }
 
 }

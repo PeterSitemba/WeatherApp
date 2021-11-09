@@ -16,15 +16,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import dagger.hilt.android.AndroidEntryPoint
 import faba.app.weatherapp.db.CurrentWeatherData
 import faba.app.weatherapp.ui.theme.WeatherAppTheme
 import faba.app.weatherapp.viewmodel.WeatherViewModel
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.location.*
 import faba.app.weatherapp.db.ForecastWeatherData
 import faba.app.weatherapp.uicomponents.WeatherScreen
@@ -38,20 +42,26 @@ class MainActivity : ComponentActivity() {
     lateinit var longitude: String
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val weatherViewModel: WeatherViewModel by viewModels()
+
+    @ExperimentalPermissionsApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
 
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-            getLastLocation()
-
             WeatherAppTheme {
-                WeatherActivityScreen(weatherViewModel)
-            }
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-            weatherViewModel.errorMessage.observe(this, {
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-            })
+                PermissionsHandler()
+
+                WeatherAppTheme {
+                    WeatherActivityScreen(weatherViewModel)
+                }
+
+                weatherViewModel.errorMessage.observe(this, {
+                    Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                })
+
+            }
 
         }
     }
@@ -104,31 +114,109 @@ class MainActivity : ComponentActivity() {
         })
     }
 
-    @SuppressLint("MissingPermission")
-    private fun getLastLocation() {
-        if (checkPermissions()) {
-            if (isLocationEnabled()) {
 
-                fusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
-                    val location: Location? = task.result
-                    if (location == null) {
-                        requestNewLocationData()
-                    } else {
-                        latitude = location.latitude.toString()
-                        initCurrentWeather(location.latitude, location.longitude)
-                        initWeatherForecast(location.latitude, location.longitude)
+    @ExperimentalPermissionsApi
+    @Composable
+    fun PermissionsHandler() {
+        var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
 
+        val permissionState = rememberMultiplePermissionsState(
+            permissions = listOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        )
+
+        val lifecycleOwner = LocalLifecycleOwner.current
+
+        permissionState.permissions.forEach { perm ->
+            when (perm.permission) {
+                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION -> {
+
+                    when {
+                        perm.hasPermission -> {
+                            Toast.makeText(
+                                this,
+                                "Location permission accepted",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            getLastLocation()
+                        }
+
+                        perm.shouldShowRationale || !perm.permissionRequested -> {
+
+                            if (doNotShowRationale) {
+                                Toast.makeText(
+                                    this,
+                                    "Accurate weather forecast not available",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this,
+                                    "Location permission is needed for accurate weather forecast",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                //Disposable effect helps us register a callback we can clean up immediately after use
+                                DisposableEffect(
+                                    key1 = lifecycleOwner,
+                                    effect = {
+                                        val observer = LifecycleEventObserver { _, event ->
+                                            if (event == Lifecycle.Event.ON_RESUME) {
+                                                permissionState.launchMultiplePermissionRequest()
+                                            }
+                                        }
+
+                                        lifecycleOwner.lifecycle.addObserver(observer)
+
+                                        onDispose {
+                                            lifecycleOwner.lifecycle.removeObserver(observer)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        perm.isPermanentlyDenied() -> {
+                            Toast.makeText(
+                                this,
+                                "Location permission was permanently denied," +
+                                        " Enable it in the app settings menu",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                        }
                     }
+
                 }
-            } else {
-                Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show()
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
             }
-        } else {
-            requestPermissions()
         }
     }
+
+
+    @SuppressLint("MissingPermission")
+    fun getLastLocation() {
+        if (isLocationEnabled()) {
+            fusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
+                val location: Location? = task.result
+                if (location == null) {
+                    requestNewLocationData()
+                } else {
+                    latitude = location.latitude.toString()
+                    initCurrentWeather(location.latitude, location.longitude)
+                    initWeatherForecast(location.latitude, location.longitude)
+
+                }
+            }
+        } else {
+            Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show()
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivity(intent)
+        }
+
+    }
+
 
     private fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
@@ -136,21 +224,6 @@ class MainActivity : ComponentActivity() {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
-    }
-
-    private fun checkPermissions(): Boolean {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            return true
-        }
-        return false
     }
 
     @SuppressLint("MissingPermission")
@@ -177,30 +250,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun requestPermissions() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ),
-            PERMISSION_ID
-        )
-    }
-
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_ID) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                getLastLocation()
-            }
-        }
-    }
 }
 
 
@@ -226,3 +275,4 @@ fun DefaultPreview() {
         //WeatherScreen("sunny")
     }
 }
+
